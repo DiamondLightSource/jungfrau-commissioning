@@ -36,7 +36,7 @@ def pedestals(directory):
             s = numpy.zeros(data.shape[1:], dtype=numpy.int64)
             for j in range(data.shape[0]):
                 b = numpy.right_shift(data[j], 14) == key
-                x = data[j] * b
+                x = numpy.bitwise_and(data[j], 0x3fff) * b
                 m += b
                 i += x
                 s += numpy.square(x)
