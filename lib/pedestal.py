@@ -1,4 +1,5 @@
 import os
+import glob
 
 import numpy
 import h5py
@@ -14,6 +15,10 @@ def pedestal_raw_data(directory):
     for module in 0, 1:
         for gain in "G0", "G1", "G2":
             filename = os.path.join(directory, f"{gain}_{module}_0.h5")
+            if not os.path.exists(filename):
+                matches = glob.glob(os.path.join(directory, f"*{gain}_{module}_0.h5"))
+                assert len(matches) == 1
+                filename = matches[0]
             assert os.path.exists(filename)
             with h5py.File(filename, "r") as f:
                 result[(gain, module)] = f["data"][()]
