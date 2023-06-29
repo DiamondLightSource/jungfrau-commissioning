@@ -54,9 +54,20 @@ def pedestals(directory):
     return result
 
 
-def pedestal_mean_iqr(pedestal):
-    """For every pixel in image, compute mean of interquartile range"""
-    sorted = numpy.sort(pedestal, axis=0)
-    q = pedestal.shape[0] // 4
-    mean_iqr = numpy.mean(sorted[q:-q, :, :], axis=0)
-    return mean_iqr
+def pedestals_mean_iqr(directory):
+    """Read pedestal data; sort, select iqr and average"""
+
+    result = {}
+
+    raw_data = pedestal_raw_data(directory)
+    for module in 0, 1:
+        for gain in "G0", "G1", "G2":
+            key = gain_keys[gain]
+            data = raw_data[(gain, module)][()]
+            b = numpy.right_shift(data, 14) == key
+            m = numpy.bitwise_and(data, 0x3fff) * b
+            s = numpy.sort(m, axis=0)
+            q = data.shape[0] // 4
+            result[(gain, module)] = (numpy.mean(s[q:-q, :, :], axis=0),)
+
+    return result
