@@ -1,6 +1,7 @@
 import sys
 
 import numpy
+from matplotlib import pyplot
 
 from lib import pedestals
 
@@ -12,4 +13,6 @@ p1 = pedestals(d1)
 for module in 0, 1:
     for gain in "G0", "G1", "G2":
         diff = p0[(gain, module)][0] - p1[(gain, module)][0]
-        print((gain, module), numpy.mean(diff))
+        pyplot.imshow(diff)
+        pyplot.colorbar()
+        pyplot.show()
