@@ -1,1 +1,1 @@
-from .pedestal import pedestals
+from .pedestal import pedestals, pedestal_mean_iqr
