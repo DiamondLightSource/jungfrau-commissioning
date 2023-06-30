@@ -16,7 +16,7 @@ for module in 0, 1:
         map = numpy.zeros((ratio.shape[0], 200), dtype=numpy.int32)
         for j in range(ratio.shape[0]):
             h, e = numpy.histogram(ratio[j, :, :], range=(-10,10), bins=200)
-            map[j] = j
-        pyplot.imshow(map)
+            map[j] = h
+        pyplot.imshow(map.transpose())
         pyplot.colorbar()
         pyplot.show()
