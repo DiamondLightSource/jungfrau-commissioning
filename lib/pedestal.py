@@ -1,6 +1,7 @@
 import os
 import glob
 
+import tqdm
 import numpy
 import h5py
 
@@ -36,18 +37,18 @@ def pedestals(directory):
             key = gain_keys[gain]
             data = raw_data[(gain, module)]
             # mask, sum image, sum square image
-            m = numpy.zeros(data.shape[1:], dtype=numpy.int64)
-            i = numpy.zeros(data.shape[1:], dtype=numpy.int64)
-            s = numpy.zeros(data.shape[1:], dtype=numpy.int64)
-            for j in range(data.shape[0]):
+            m = numpy.zeros(data.shape[1:], dtype=numpy.int32)
+            i = numpy.zeros(data.shape[1:], dtype=numpy.float64)
+            s = numpy.zeros(data.shape[1:], dtype=numpy.float64)
+            for j in tqdm.tqdm(range(data.shape[0])):
                 b = numpy.right_shift(data[j], 14) == key
-                x = numpy.bitwise_and(data[j], 0x3fff) * b
+                x = (numpy.bitwise_and(data[j], 0x3fff) * b).astype(numpy.float64)
                 m += b
                 i += x
                 s += numpy.square(x)
             m[m == 0] = 1
-            i = i.astype(numpy.float64) / m
-            s = s.astype(numpy.float64) / m
+            i = i / m
+            s = s / m
             v = s - numpy.square(i)
             result[(gain, module)] = (i, v)
 
