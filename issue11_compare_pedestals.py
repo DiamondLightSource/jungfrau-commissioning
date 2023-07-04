@@ -1,6 +1,5 @@
 import sys
 
-import numpy
 from matplotlib import pyplot
 
 from lib import pedestals

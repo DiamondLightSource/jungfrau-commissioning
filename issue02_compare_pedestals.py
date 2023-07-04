@@ -1,9 +1,8 @@
 import sys
 
-import numpy
 from matplotlib import pyplot
 
-from lib import pedestals, pedestals_mean_iqr
+from lib.pedestal import pedestals, pedestals_mean_iqr
 
 d0 = sys.argv[1]
 
