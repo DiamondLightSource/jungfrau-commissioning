@@ -2,14 +2,20 @@ import os
 import glob
 
 import numpy
+import numpy.typing
 import h5py
 from tqdm import tqdm
 from itertools import product
 
+from typing import TypeAlias
+
 gain_keys = {"G0": 0, "G1": 1, "G2": 3}
+PedestalDict: TypeAlias = dict[tuple[int, str], numpy.typing.NDArray]
 
 
-def pedestal_raw_data(directory):
+def pedestal_raw_data(
+    directory: str | os.PathLike,
+) -> PedestalDict:
     """Read pedestal data from the files in the named directory"""
     result = {}
     total_usage = 0
@@ -31,12 +37,13 @@ def pedestal_raw_data(directory):
     return result
 
 
-def pedestals(directory):
+def pedestals(raw_data: PedestalDict | str | os.PathLike):
     """Read pedestal data; filter and average"""
 
-    result = {}
+    if not isinstance(raw_data, dict):
+        raw_data = pedestal_raw_data(raw_data)
 
-    raw_data = pedestal_raw_data(directory)
+    result = {}
     for module in 0, 1:
         for gain in "G0", "G1", "G2":
             key = gain_keys[gain]
@@ -60,12 +67,12 @@ def pedestals(directory):
     return result
 
 
-def pedestals_mean_iqr(directory):
+def pedestals_mean_iqr(raw_data: PedestalDict | str | os.PathLike):
     """Read pedestal data; sort, select iqr and average"""
+    if not isinstance(raw_data, dict):
+        raw_data = pedestal_raw_data(raw_data)
 
     result = {}
-
-    raw_data = pedestal_raw_data(directory)
     for module in 0, 1:
         for gain in "G0", "G1", "G2":
             print(f"IQR for {module} {gain}")

@@ -2,12 +2,13 @@ import sys
 
 from matplotlib import pyplot
 
-from lib.pedestal import pedestals, pedestals_mean_iqr
+from lib import pedestals, pedestals_mean_iqr, pedestal_raw_data
 
 d0 = sys.argv[1]
 
-pmi = pedestals_mean_iqr(d0)
-pref = pedestals(d0)
+raw_data = pedestal_raw_data(d0)
+pmi = pedestals_mean_iqr(raw_data)
+pref = pedestals(raw_data)
 
 for module in 0, 1:
     for gain in "G0", "G1", "G2":
