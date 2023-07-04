@@ -16,6 +16,6 @@ for module in 0, 1:
             for j in range(len(h)):
                 f.write(f"{e[j]} {e[j+1]} {h[j]}\n")
         fig, axes = pyplot.subplots(2)
-        axes[0].imshow(pref[(gain, module)][0])
-        axes[1].imshow(pref[(gain, module)][1])
+        axes[0].imshow(pref[gain, module][0])
+        axes[1].imshow(pref[gain, module][1])
         pyplot.show()

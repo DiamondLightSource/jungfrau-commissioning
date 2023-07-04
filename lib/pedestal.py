@@ -77,11 +77,11 @@ def pedestals_mean_iqr(raw_data: PedestalDict | str | os.PathLike):
         for gain in "G0", "G1", "G2":
             print(f"IQR for {module} {gain}")
             key = gain_keys[gain]
-            data = raw_data[(gain, module)][()]
+            data = raw_data[gain, module][()]
             b = numpy.right_shift(data, 14) == key
             m = numpy.bitwise_and(data, 0x3FFF) * b
             s = numpy.sort(m, axis=0)
             q = data.shape[0] // 4
-            result[(gain, module)] = (numpy.mean(s[q:-q, :, :], axis=0),)
+            result[gain, module] = (numpy.mean(s[q:-q, :, :], axis=0),)
 
     return result
