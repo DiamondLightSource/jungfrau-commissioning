@@ -1,16 +1,81 @@
-import os
-import glob
+from __future__ import annotations
 
+import dataclasses
+import glob
+import logging
+import os
+import time
+from itertools import product
+from pathlib import Path
+from typing import TypeAlias
+
+import h5py
 import numpy
 import numpy.typing
-import h5py
 from tqdm import tqdm
-from itertools import product
 
-from typing import TypeAlias
+logger = logging.getLogger(__name__)
 
 gain_keys = {"G0": 0, "G1": 1, "G2": 3}
 PedestalDict: TypeAlias = dict[tuple[int, str], numpy.typing.NDArray]
+
+
+@dataclasses.dataclass
+class Pedestal:
+    data: numpy.typing.NDArray
+    mask: numpy.typing.NDArray
+    variance: numpy.typing.NDArray
+
+    filename: Path
+    _raw_data: numpy.typing.NDArray | None = None
+
+    def load_raw_data(self) -> numpy.typing.NDArray:
+        """Open the source data file and read the entire array."""
+        if self._raw_data is not None:
+            return self._raw_data
+
+        with h5py.File(self.filename, "r") as f:
+            logger.debug(
+                f"Reading {f['data'].nbytes/1000/1000:.0f} MB raw data from {self.filename}"
+            )
+            start = time.monotonic()
+            self._raw_data = f["data"][()]
+            logger.debug(f"   ... done in {time.monotonic()-start:.1f} s")
+
+        return self._raw_data
+
+
+class PedestalFile:
+    _data: dict[tuple[int, str], Pedestal]
+    path: Path
+
+    modules = ["M420", "M418"]
+    gains = ["G0", "G1", "G2"]
+
+    def __init__(self, path: str | os.PathLike):
+        """Read a processed pedestal file, and get all the data therein"""
+        self.path = Path(path)
+        self._data = {}
+
+        logging.debug(f"Reading pedestal file {path}")
+        with h5py.File(path, "r") as f:
+            for gain in [0, 1, 2]:
+                for mid, module in [(0, "M420"), (1, "M418")]:
+                    raw_data = f[f"{module}/pedestal_{gain}"][...]
+                    logger.debug(
+                        f"Read {module} {gain} in {raw_data.nbytes/1000:.0f} KB"
+                    )
+                    self._data[mid, f"G{gain}"] = Pedestal(
+                        data=raw_data,
+                        filename=Path(f[f"{module}/pedestal_{gain}"].attrs["filename"]),
+                        mask=f[f"{module}/pedestal_{gain}_mask"][...],
+                        variance=f[f"{module}/pedestal_{gain}_variance"][...],
+                    )
+
+    def __getitem__(self, key: tuple[int | str, str]) -> Pedestal:
+        if isinstance(key[0], str):
+            return self._data[self.modules.index(key[0]), key[1]]
+        return self._data[key]
 
 
 def pedestal_raw_data(
@@ -37,8 +102,10 @@ def pedestal_raw_data(
     return result
 
 
-def pedestals(raw_data: PedestalDict | str | os.PathLike):
-    """Read pedestal data; filter and average"""
+def pedestals(
+    raw_data: PedestalDict | str | os.PathLike,
+) -> dict[tuple[int, str], tuple[numpy.typing.NDArray, numpy.typing.NDArray]]:
+    """Read pedestal data; filter; return mean and variance"""
 
     if not isinstance(raw_data, dict):
         raw_data = pedestal_raw_data(raw_data)
